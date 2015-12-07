@@ -1,7 +1,7 @@
 FROM golang:1.5 MAINTAINER Hugo González Labrador
 
 ENV CLAWIO_LOCALSTOREXATTRPROP_PORT 57013
-ENV CLAWIO_LOCALSTOREXATTRPROP_DSN "prop:passforuserprop@tcp(service-localstorexattr-prop-mysql:3306)/prop"
+ENV CLAWIO_LOCALSTOREXATTRPROP_DSN "prop:passforuserprop@tcp(service-localstorexattr-prop-mysql:3316)/prop"
 ENV CLAWIO_SHAREDSECRET secret
 
 ADD . /go/src/github.com/clawio/service.localstorexattr.prop
