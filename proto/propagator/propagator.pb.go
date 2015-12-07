@@ -42,6 +42,7 @@ func (*Void) ProtoMessage()    {}
 type PutReq struct {
 	AccessToken string `protobuf:"bytes,1,opt,name=access_token" json:"access_token,omitempty"`
 	Path        string `protobuf:"bytes,2,opt,name=path" json:"path,omitempty"`
+	Checksum    string `protobuf:"bytes,3,opt,name=checksum" json:"checksum,omitempty"`
 }
 
 func (m *PutReq) Reset()         { *m = PutReq{} }
@@ -78,9 +79,11 @@ func (m *MvReq) String() string { return proto.CompactTextString(m) }
 func (*MvReq) ProtoMessage()    {}
 
 type Record struct {
-	Path     string `protobuf:"bytes,1,opt,name=path" json:"path,omitempty"`
-	Modified uint32 `protobuf:"varint,2,opt,name=modified" json:"modified,omitempty"`
-	Etag     string `protobuf:"bytes,3,opt,name=etag" json:"etag,omitempty"`
+	Id       string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Path     string `protobuf:"bytes,2,opt,name=path" json:"path,omitempty"`
+	Checksum string `protobuf:"bytes,3,opt,name=checksum" json:"checksum,omitempty"`
+	Modified uint32 `protobuf:"varint,4,opt,name=modified" json:"modified,omitempty"`
+	Etag     string `protobuf:"bytes,5,opt,name=etag" json:"etag,omitempty"`
 }
 
 func (m *Record) Reset()         { *m = Record{} }
@@ -96,6 +99,7 @@ var _ grpc.ClientConn
 type PropClient interface {
 	Put(ctx context.Context, in *PutReq, opts ...grpc.CallOption) (*Void, error)
 	Get(ctx context.Context, in *GetReq, opts ...grpc.CallOption) (*Record, error)
+	// rpc Cp(CpReq) returns (Void) {}
 	Mv(ctx context.Context, in *MvReq, opts ...grpc.CallOption) (*Void, error)
 	Rm(ctx context.Context, in *RmReq, opts ...grpc.CallOption) (*Void, error)
 }
@@ -149,6 +153,7 @@ func (c *propClient) Rm(ctx context.Context, in *RmReq, opts ...grpc.CallOption)
 type PropServer interface {
 	Put(context.Context, *PutReq) (*Void, error)
 	Get(context.Context, *GetReq) (*Record, error)
+	// rpc Cp(CpReq) returns (Void) {}
 	Mv(context.Context, *MvReq) (*Void, error)
 	Rm(context.Context, *RmReq) (*Void, error)
 }
