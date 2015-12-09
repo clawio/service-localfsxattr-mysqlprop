@@ -1,4 +1,5 @@
-FROM golang:1.5 MAINTAINER Hugo González Labrador
+FROM golang:1.5
+MAINTAINER Hugo González Labrador
 
 ENV CLAWIO_LOCALSTOREXATTRPROP_PORT 57013
 ENV CLAWIO_LOCALSTOREXATTRPROP_DSN "prop:passforuserprop@tcp(service-localstorexattr-prop-mysql:3316)/prop"

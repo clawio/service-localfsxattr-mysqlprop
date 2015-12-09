@@ -12,10 +12,6 @@
 			"Rev": "59b2672ba44edebdc97f2a55f56d716d7c8ea33b"
 		},
 		{
-			"ImportPath": "github.com/clawio/service.localstore.prop/proto/propagator",
-			"Rev": "327232bfd1ff0af05dfe0a358250b49a00b62108"
-		},
-		{
 			"ImportPath": "github.com/dgrijalva/jwt-go",
 			"Comment": "v2.3.0-3-g3b55c4a",
 			"Rev": "3b55c4adf0c509e95f815b0cbb36424c7d49c73c"
