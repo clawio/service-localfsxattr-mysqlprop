@@ -12,13 +12,31 @@
 			"Rev": "f719f969d9ba2a408da4763d66f5f5faf2ecbab1"
 		},
 		{
+			"ImportPath": "github.com/dgrijalva/jwt-go",
+			"Comment": "v2.4.0",
+			"Rev": "f164e17f59b82642a3895ba065c385db6c547344"
+		},
+		{
 			"ImportPath": "github.com/go-sql-driver/mysql",
 			"Comment": "v1.2-119-g527bcd5",
 			"Rev": "527bcd55aab2e53314f1a150922560174b493034"
 		},
 		{
+			"ImportPath": "github.com/golang/protobuf/proto",
+			"Rev": "5baca1b63153b1a82014546382edbdd302b138b6"
+		},
+		{
 			"ImportPath": "github.com/jinzhu/gorm",
 			"Rev": "a480621b7639522fd8fc3482cb37d3af74e7a6e6"
+		},
+		{
+			"ImportPath": "github.com/lib/pq/hstore",
+			"Comment": "go1.0-cutoff-59-gb269bd0",
+			"Rev": "b269bd035a727d6c1081f76e7a239a1b00674c40"
+		},
+		{
+			"ImportPath": "github.com/qor/inflection",
+			"Rev": "3272df6c21d04180007eb3349844c89a3856bc25"
 		},
 		{
 			"ImportPath": "github.com/sirupsen/logrus",
@@ -27,6 +45,10 @@
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
+			"Rev": "1796f9b8b7178e3c7587dff118d3bb9d37f9b0b3"
+		},
+		{
+			"ImportPath": "golang.org/x/net/trace",
 			"Rev": "1796f9b8b7178e3c7587dff118d3bb9d37f9b0b3"
 		},
 		{
