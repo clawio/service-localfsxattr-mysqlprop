@@ -181,6 +181,29 @@ func (s *server) Mv(ctx context.Context, req *pb.MvReq) (*pb.Void, error) {
 	log.Infof("src path is %s", src)
 	log.Infof("dst path is %s", dst)
 
+	recs, err := s.getRecordsWithPathPrefix(src)
+	if err != nil {
+		log.Error(err)
+		return &pb.Void{}, nil
+
+	}
+
+	tx := s.db.Begin()
+	for _, rec := range recs {
+		newPath := path.Join(dst, path.Clean(strings.TrimPrefix(rec.Path, src)))
+		log.Infof("src path %s will be renamed to %s", rec.Path, newPath)
+
+		err = s.db.Model(record{}).Where("path=?", rec.Path).Updates(record{Path: newPath}).Error
+		if err != nil {
+			log.Error(err)
+			tx.Rollback()
+			return &pb.Void{}, err
+		}
+	}
+	tx.Commit()
+
+	log.Infof("renamed %d entries", len(recs))
+
 	etag := uuid.New()
 	mtime := uint32(time.Now().Unix())
 	err = s.propagateChanges(ctx, dst, etag, mtime, "")
@@ -296,7 +319,7 @@ func (s *server) Put(ctx context.Context, req *pb.PutReq) (*pb.Void, error) {
 	var etag = uuid.New()
 	var mtime = uint32(time.Now().Unix())
 
-	log.Infof("new record will have path=%s etag=%s mtime=%d",  p, etag, mtime)
+	log.Infof("new record will have path=%s etag=%s mtime=%d", p, etag, mtime)
 
 	err = s.insert(p, etag, mtime)
 	if err != nil {
@@ -323,7 +346,7 @@ func (s *server) getByPath(path string) (*record, error) {
 	return r, err
 }
 
-func (s *server) insert(p,etag string, mtime uint32) error {
+func (s *server) insert(p, etag string, mtime uint32) error {
 
 	err := s.db.Exec(`INSERT INTO records (path, e_tag, m_time) VALUES (?,?,?)
 	ON DUPLICATE KEY UPDATE e_tag=VALUES(e_tag), m_time=VALUES(m_time)`,

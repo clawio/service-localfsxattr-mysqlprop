@@ -1,20 +1,20 @@
 {
 	"ImportPath": "github.com/clawio/service.localstorexattr.prop",
-	"GoVersion": "go1.5.1",
+	"GoVersion": "go1.5.2",
 	"Deps": [
 		{
 			"ImportPath": "code.google.com/p/go-uuid/uuid",
 			"Comment": "null-15",
-			"Rev": "'35bc42037350f0078e3c974c6ea690f1926603ab'"
+			"Rev": "35bc42037350f0078e3c974c6ea690f1926603ab"
 		},
 		{
 			"ImportPath": "github.com/clawio/service.auth/lib",
-			"Rev": "f719f969d9ba2a408da4763d66f5f5faf2ecbab1"
+			"Rev": "59b2672ba44edebdc97f2a55f56d716d7c8ea33b"
 		},
 		{
 			"ImportPath": "github.com/dgrijalva/jwt-go",
-			"Comment": "v2.4.0",
-			"Rev": "f164e17f59b82642a3895ba065c385db6c547344"
+			"Comment": "v2.3.0-3-g3b55c4a",
+			"Rev": "3b55c4adf0c509e95f815b0cbb36424c7d49c73c"
 		},
 		{
 			"ImportPath": "github.com/go-sql-driver/mysql",
@@ -36,7 +36,7 @@
 		},
 		{
 			"ImportPath": "github.com/qor/inflection",
-			"Rev": "3272df6c21d04180007eb3349844c89a3856bc25"
+			"Rev": "45321e63b98c756df17369c027c1df89298e1288"
 		},
 		{
 			"ImportPath": "github.com/sirupsen/logrus",
@@ -45,11 +45,11 @@
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
-			"Rev": "1796f9b8b7178e3c7587dff118d3bb9d37f9b0b3"
+			"Rev": "b4e17d61b15679caf2335da776c614169a1b4643"
 		},
 		{
 			"ImportPath": "golang.org/x/net/trace",
-			"Rev": "1796f9b8b7178e3c7587dff118d3bb9d37f9b0b3"
+			"Rev": "b4e17d61b15679caf2335da776c614169a1b4643"
 		},
 		{
 			"ImportPath": "google.golang.org/grpc",
