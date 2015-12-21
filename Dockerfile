@@ -1,18 +1,18 @@
 FROM golang:1.5
 MAINTAINER Hugo González Labrador
 
-ENV CLAWIO_LOCALSTOREXATTRPROP_PORT 57003
-ENV CLAWIO_LOCALSTOREXATTRPROP_DSN "prop:passforuserprop@tcp(service-localstorexattr-prop-mysql:3306)/prop"
+ENV CLAWIO_LOCALFSXATTR_MYSQLPROP_PORT 57013
+ENV CLAWIO_LOCALFSXATTR_MYSQLPROP_DSN "prop:passforuserprop@tcp(service-localfsxattr-mysqlprop-mysql)/prop"
 ENV CLAWIO_SHAREDSECRET secret
 
-ADD . /go/src/github.com/clawio/service.localstorexattr.prop
-WORKDIR /go/src/github.com/clawio/service.localstorexattr.prop
+ADD . /go/src/github.com/clawio/service-localfsxattr-mysqlprop
+WORKDIR /go/src/github.com/clawio/service-localfsxattr-mysqlprop
 
 RUN go get -u github.com/tools/godep
 RUN godep restore
 RUN go install
 
-ENTRYPOINT /go/bin/service.localstorexattr.prop
+ENTRYPOINT /go/bin/service-localfsxattr-mysqlprop
 
-EXPOSE 57003
+EXPOSE 57013
 

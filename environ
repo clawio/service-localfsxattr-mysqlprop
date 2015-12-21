@@ -1,3 +1,3 @@
-export CLAWIO_LOCALSTOREXATTRPROP_PORT=57003
-export CLAWIO_LOCALSTOREXATTRPROP_DSN="prop:passforuserprop@tcp(service-localstorexattr-prop-mysql:3306)/prop"
+export CLAWIO_LOCALFSXATTR_MYSQLPROP_PORT=57013
+export CLAWIO_LOCALFSXATTR_MYSQLPROP_DSN="prop:passforuserprop@tcp(service-localfsxattr-mysqlprop-mysql)/prop"
 export CLAWIO_SHAREDSECRET=secret
