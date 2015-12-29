@@ -220,7 +220,7 @@ func (s *server) getRecordsWithPathPrefix(p string) ([]record, error) {
 
 	var recs []record
 
-	err := s.db.Where("path LIKE ?", p+"%").Find(&recs).Error
+	err := s.db.Where("path LIKE ? OR path=?", p+"/%", p).Find(&recs).Error
 	if err != nil {
 		return recs, nil
 	}
@@ -264,7 +264,7 @@ func (s *server) Rm(ctx context.Context, req *pb.RmReq) (*pb.Void, error) {
 	log.Infof("path is %s", p)
 
 	ts := time.Now().Unix()
-	err = s.db.Where("path LIKE ? AND m_time < ?", p+"%", ts).Delete(record{}).Error
+	err = s.db.Where("(path LIKE ? OR path=? ) AND m_time < ?", p+"/%", p, ts).Delete(record{}).Error
 	if err != nil {
 		log.Error(err)
 		return &pb.Void{}, err
