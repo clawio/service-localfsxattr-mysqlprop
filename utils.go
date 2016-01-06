@@ -12,9 +12,9 @@ import (
 
 // TODO(labkode) set collation for table and column to utf8. The default is swedish
 type record struct {
-	Path     string
-	ETag     string
-	MTime    uint32
+	Path  string `sql:"unique_index:idx_path"`
+	ETag  string
+	MTime uint32
 }
 
 func (r *record) String() string {
