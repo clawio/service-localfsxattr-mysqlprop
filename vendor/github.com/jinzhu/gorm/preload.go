@@ -9,24 +9,29 @@ import (
 )
 
 func getRealValue(value reflect.Value, columns []string) (results []interface{}) {
-	for _, column := range columns {
-		if reflect.Indirect(value).FieldByName(column).IsValid() {
-			result := reflect.Indirect(value).FieldByName(column).Interface()
-			if r, ok := result.(driver.Valuer); ok {
-				result, _ = r.Value()
+	// If value is a nil pointer, Indirect returns a zero Value!
+	// Therefor we need to check for a zero value,
+	// as FieldByName could panic
+	if pointedValue := reflect.Indirect(value); pointedValue.IsValid() {
+		for _, column := range columns {
+			if pointedValue.FieldByName(column).IsValid() {
+				result := pointedValue.FieldByName(column).Interface()
+				if r, ok := result.(driver.Valuer); ok {
+					result, _ = r.Value()
+				}
+				results = append(results, result)
 			}
-			results = append(results, result)
 		}
 	}
 	return
 }
 
 func equalAsString(a interface{}, b interface{}) bool {
-	return fmt.Sprintf("%v", a) == fmt.Sprintf("%v", b)
+	return toString(a) == toString(b)
 }
 
 func Preload(scope *Scope) {
-	if scope.Search.preload == nil {
+	if scope.Search.preload == nil || scope.HasError() {
 		return
 	}
 
@@ -63,7 +68,7 @@ func Preload(scope *Scope) {
 				case "belongs_to":
 					currentScope.handleBelongsToPreload(field, conditions)
 				case "many_to_many":
-					currentScope.handleHasManyToManyPreload(field, conditions)
+					currentScope.handleManyToManyPreload(field, conditions)
 				default:
 					currentScope.Err(errors.New("not supported relation"))
 				}
@@ -145,17 +150,24 @@ func (scope *Scope) handleHasManyPreload(field *Field, conditions []interface{})
 	resultValues := reflect.Indirect(reflect.ValueOf(results))
 
 	if scope.IndirectValue().Kind() == reflect.Slice {
+		preloadMap := make(map[string][]reflect.Value)
 		for i := 0; i < resultValues.Len(); i++ {
 			result := resultValues.Index(i)
 			value := getRealValue(result, relation.ForeignFieldNames)
-			objects := scope.IndirectValue()
-			for j := 0; j < objects.Len(); j++ {
-				object := reflect.Indirect(objects.Index(j))
-				if equalAsString(getRealValue(object, relation.AssociationForeignFieldNames), value) {
-					f := object.FieldByName(field.Name)
-					f.Set(reflect.Append(f, result))
-					break
+			preloadMap[toString(value)] = append(preloadMap[toString(value)], result)
+		}
+
+		objects := scope.IndirectValue()
+		for j := 0; j < objects.Len(); j++ {
+			object := reflect.Indirect(objects.Index(j))
+			objectRealValue := getRealValue(object, relation.AssociationForeignFieldNames)
+			objectStringValue := toString(objectRealValue)
+			if results, ok := preloadMap[objectStringValue]; ok {
+				if object.Kind() == reflect.Ptr {
+					object = object.Elem()
 				}
+				f := object.FieldByName(field.Name)
+				f.Set(reflect.Append(f, results...))
 			}
 		}
 	} else {
@@ -181,6 +193,9 @@ func (scope *Scope) handleBelongsToPreload(field *Field, conditions []interface{
 			objects := scope.IndirectValue()
 			for j := 0; j < objects.Len(); j++ {
 				object := reflect.Indirect(objects.Index(j))
+				if object.Kind() == reflect.Ptr {
+					object = reflect.Indirect(objects.Index(j).Elem())
+				}
 				if equalAsString(getRealValue(object, relation.ForeignFieldNames), value) {
 					object.FieldByName(field.Name).Set(result)
 				}
@@ -191,9 +206,8 @@ func (scope *Scope) handleBelongsToPreload(field *Field, conditions []interface{
 	}
 }
 
-func (scope *Scope) handleHasManyToManyPreload(field *Field, conditions []interface{}) {
+func (scope *Scope) handleManyToManyPreload(field *Field, conditions []interface{}) {
 	relation := field.Relationship
-
 	joinTableHandler := relation.JoinTableHandler
 	destType := field.StructField.Struct.Type.Elem()
 	var isPtr bool
@@ -209,8 +223,10 @@ func (scope *Scope) handleHasManyToManyPreload(field *Field, conditions []interf
 		sourceKeys = append(sourceKeys, key.DBName)
 	}
 
-	db := scope.NewDB().Table(scope.New(reflect.New(destType).Interface()).TableName())
+	db := scope.NewDB().Table(scope.New(reflect.New(destType).Interface()).TableName()).Select("*")
+
 	preloadJoinDB := joinTableHandler.JoinWith(joinTableHandler, db, scope.Value)
+
 	if len(conditions) > 0 {
 		preloadJoinDB = preloadJoinDB.Where(conditions[0], conditions[1:]...)
 	}
@@ -228,13 +244,15 @@ func (scope *Scope) handleHasManyToManyPreload(field *Field, conditions []interf
 
 		fields := scope.New(elem.Addr().Interface()).Fields()
 
+		var foundFields = map[string]bool{}
 		for index, column := range columns {
-			if field, ok := fields[column]; ok {
+			if field, ok := fields[column]; ok && !foundFields[column] {
 				if field.Field.Kind() == reflect.Ptr {
 					values[index] = field.Field.Addr().Interface()
 				} else {
 					values[index] = reflect.New(reflect.PtrTo(field.Field.Type())).Interface()
 				}
+				foundFields[column] = true
 			} else {
 				var i interface{}
 				values[index] = &i
@@ -245,14 +263,16 @@ func (scope *Scope) handleHasManyToManyPreload(field *Field, conditions []interf
 
 		var sourceKey []interface{}
 
+		var scannedFields = map[string]bool{}
 		for index, column := range columns {
 			value := values[index]
-			if field, ok := fields[column]; ok {
+			if field, ok := fields[column]; ok && !scannedFields[column] {
 				if field.Field.Kind() == reflect.Ptr {
 					field.Field.Set(reflect.ValueOf(value).Elem())
 				} else if v := reflect.ValueOf(value).Elem().Elem(); v.IsValid() {
 					field.Field.Set(v)
 				}
+				scannedFields[column] = true
 			} else if strInSlice(column, sourceKeys) {
 				sourceKey = append(sourceKey, *(value.(*interface{})))
 			}
@@ -267,10 +287,10 @@ func (scope *Scope) handleHasManyToManyPreload(field *Field, conditions []interf
 		}
 	}
 
-	var associationForeignStructFieldNames []string
-	for _, dbName := range relation.AssociationForeignFieldNames {
+	var foreignFieldNames []string
+	for _, dbName := range relation.ForeignFieldNames {
 		if field, ok := scope.FieldByName(dbName); ok {
-			associationForeignStructFieldNames = append(associationForeignStructFieldNames, field.Name)
+			foreignFieldNames = append(foreignFieldNames, field.Name)
 		}
 	}
 
@@ -278,18 +298,22 @@ func (scope *Scope) handleHasManyToManyPreload(field *Field, conditions []interf
 		objects := scope.IndirectValue()
 		for j := 0; j < objects.Len(); j++ {
 			object := reflect.Indirect(objects.Index(j))
-			source := getRealValue(object, associationForeignStructFieldNames)
+			if object.Kind() == reflect.Ptr {
+				object = object.Elem()
+			}
+			source := getRealValue(object, foreignFieldNames)
 			field := object.FieldByName(field.Name)
 			for _, link := range linkHash[toString(source)] {
 				field.Set(reflect.Append(field, link))
 			}
 		}
 	} else {
-		object := scope.IndirectValue()
-		source := getRealValue(object, associationForeignStructFieldNames)
-		field := object.FieldByName(field.Name)
-		for _, link := range linkHash[toString(source)] {
-			field.Set(reflect.Append(field, link))
+		if object := scope.IndirectValue(); object.IsValid() {
+			source := getRealValue(object, foreignFieldNames)
+			field := object.FieldByName(field.Name)
+			for _, link := range linkHash[toString(source)] {
+				field.Set(reflect.Append(field, link))
+			}
 		}
 	}
 }
@@ -301,7 +325,11 @@ func (scope *Scope) getColumnAsArray(columns []string) (results [][]interface{})
 		for i := 0; i < values.Len(); i++ {
 			var result []interface{}
 			for _, column := range columns {
-				result = append(result, reflect.Indirect(values.Index(i)).FieldByName(column).Interface())
+				value := reflect.Indirect(values.Index(i))
+				if value.Kind() == reflect.Ptr {
+					value = reflect.Indirect(values.Index(i).Elem())
+				}
+				result = append(result, value.FieldByName(column).Interface())
 			}
 			results = append(results, result)
 		}

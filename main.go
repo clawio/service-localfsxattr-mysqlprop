@@ -15,6 +15,7 @@ const (
 	serviceID              = "CLAWIO_LOCALFSXATTR_MYSQLPROP"
 	dsnEnvar               = serviceID + "_DSN"
 	portEnvar              = serviceID + "_PORT"
+	logLevelEnvar          = serviceID + "_LOGLEVEL"
 	maxSqlIdleEnvar        = serviceID + "_MAXSQLIDLE"
 	maxSqlConcurrencyEnvar = serviceID + "_MAXSQLCONCURRENCY"
 	sharedSecretEnvar      = "CLAWIO_SHAREDSECRET"
@@ -23,6 +24,7 @@ const (
 type environ struct {
 	dsn               string
 	port              int
+	logLevel          string
 	maxSqlIdle        int
 	maxSqlConcurrency int
 	sharedSecret      string
@@ -48,7 +50,7 @@ func getEnviron() (*environ, error) {
 		return nil, err
 	}
 	e.maxSqlConcurrency = maxSqlConcurrency
-
+	e.logLevel = os.Getenv(logLevelEnvar)
 	e.sharedSecret = os.Getenv(sharedSecretEnvar)
 	return e, nil
 }
@@ -63,7 +65,6 @@ func printEnviron(e *environ) {
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	log.Infof("Service %s started", serviceID)
 
 	env, err := getEnviron()
 	if err != nil {
@@ -71,7 +72,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	l, err := log.ParseLevel(env.logLevel)
+	if err != nil {
+		l = log.ErrorLevel
+	}
+	log.SetLevel(l)
+
+
 	printEnviron(env)
+	log.Infof("Service %s started", serviceID)
 
 	p := &newServerParams{}
 	p.dsn = env.dsn
