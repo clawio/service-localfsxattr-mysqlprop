@@ -22,4 +22,5 @@ _testmain.go
 *.exe
 *.test
 *.prof
-service.localstorexattr.prop
+
+service-localfsxattr-mysqlprop
